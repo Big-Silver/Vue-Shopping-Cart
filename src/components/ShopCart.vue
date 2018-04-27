@@ -1,44 +1,56 @@
 <template>
-  <div>
-    <b-form @submit="onSubmit" @reset="onReset" v-if="show">
-      <b-form-group id="groceriesType"
-                    label="Groceries Type:"
-                    label-for="groceriesInput">
-        <b-form-select id="groceriesInput"
-                      :options="foods"
-                      required
-                      v-model="form.groceries">
-        </b-form-select>
-      </b-form-group>
-      <b-form-group id="fridgeType"
-                    label="Fridge Type:"
-                    label-for="fridgeInput">
-        <b-form-select id="fridgeInput"
-                      :options="fridges"
-                      required
-                      v-model="form.fridge">
-        </b-form-select>
-      </b-form-group>
-      <b-form-group id="groceriesAmount"
-                    label="Amounts:"
-                    label-for="amountInput">
-        <b-form-input id="amountInput"
-                      type="number"
-                      required
-                      v-model="form.amount">
-        </b-form-input>
-      </b-form-group>
-      <b-button type="submit" variant="primary">Add</b-button>
-      <b-button type="reset" variant="danger">Reset</b-button>
-    </b-form>
-    <b-table striped hover :items="items" :fields="fields">
-      <template slot="actions" slot-scope="row">
-        <b-button size="sm" @click.stop="decrease(row.item, row.index, $event.target)" class="mr-1">
-          Decrease
-        </b-button>
-      </template>
-    </b-table>
-  </div>
+  <b-container>
+    <b-row>
+      <b-col cols="5">
+        <b-form @submit="onSubmit" @reset="onReset" v-if="show">
+          <b-form-group id="groceriesType"
+                        label="Groceries Type:"
+                        label-for="groceriesInput">
+            <b-form-select id="groceriesInput"
+                          :options="foods"
+                          required
+                          v-model="form.groceries">
+            </b-form-select>
+          </b-form-group>
+          <b-form-group id="fridgeType"
+                        label="Fridge Type:"
+                        label-for="fridgeInput">
+            <b-form-select id="fridgeInput"
+                          :options="fridges"
+                          required
+                          v-model="form.fridge">
+            </b-form-select>
+          </b-form-group>
+          <b-form-group id="groceriesAmount"
+                        label="Amounts:"
+                        label-for="amountInput">
+            <b-form-input id="amountInput"
+                          type="number"
+                          required
+                          v-model="form.amount">
+            </b-form-input>
+          </b-form-group>
+          <b-button type="submit" variant="primary">Add</b-button>
+          <b-button type="reset" variant="danger">Reset</b-button>
+        </b-form>
+      </b-col>
+      <b-col cols="5">
+        <p>Used Up</p>
+        <b-list-group>
+          <b-list-group-item v-for='(item, index) in used_list' :key='index'>{{item}}</b-list-group-item>
+        </b-list-group>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-table striped hover :items="items" :fields="fields">
+        <template slot="actions" slot-scope="row">
+          <b-button size="sm" @click.stop="decrease(row.item, row.index, $event.target)" class="mr-1">
+            Decrease
+          </b-button>
+        </template>
+      </b-table>
+    </b-row>
+  </b-container>
 </template>
 
 <script>
@@ -61,6 +73,7 @@ export default {
         'Fridge1', 'Fridge2'
       ],
       show: true,
+      used_list: [],
       fields: [
         {
           key: 'grocery',
@@ -87,6 +100,34 @@ export default {
   },
   created: function () {
     this.items = JSON.parse(localStorage.getItem('vue_shopping_cart'))
+  },
+  watch: {
+    items: function (val) {
+      var vm = this
+      vm.foods.forEach(function (ele, index) {
+        if (index !== 0) {
+          var itemFlg = false
+          var usedFlg = false
+          var usedIdx
+          val.forEach(function (item, idx) {
+            if (item['grocery'] === ele) {
+              itemFlg = true
+            }
+          })
+          vm.used_list.forEach(function (used, id) {
+            if (used === ele) {
+              usedFlg = true
+              usedIdx = id
+            }
+          })
+          if (!itemFlg && !usedFlg) {
+            vm.used_list.push(ele)
+          } else if (itemFlg && usedFlg) {
+            vm.used_list.splice(usedIdx, 1)
+          }
+        }
+      })
+    }
   },
   methods: {
     onSubmit (evt) {
